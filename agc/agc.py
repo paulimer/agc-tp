@@ -71,11 +71,58 @@ def get_arguments():
     return parser.parse_args()
 
 def read_fasta(amplicon_file, minseqlen):
-    pass
+    """
+    Reads a compressed fasta file an returns sequnces long enough
 
+    Parameters
+    ----------
+    amplicon_file: str
+    Path to the file
+    minseqlen: int
+    the minimum length of a read sequence
+
+    Returns
+    -------
+    A generator containing all sequences passing the cut
+    """
+    # Only works for single-line fastas
+    with gzip.open(amplicon_file, "rt") as filein:
+        line = filein.readline().rstrip()
+        seq = ""
+        while line:
+            if line.startswith(">"):
+                if len(seq) > minseqlen:
+                    yield seq
+                seq = ""
+            else:
+                seq += line
+            line = filein.readline().rstrip()
+        if len(seq) > minseqlen:
+            yield seq
 
 def dereplication_fulllength(amplicon_file, minseqlen, mincount):
-    pass
+    """
+    Creates a list of lists of sequence, count from a file containing sequences
+
+    Parameters
+    ----------
+    amplicon_file: str
+    pat to the file
+    minseqlen: int
+    minimym length of sequences
+    mincount: int
+    minimum count of sequences
+
+    Returns
+    -------
+    A generator of the [sequence, count] lists
+    """
+    dic_count = {seq:count for seq, count in Counter(read_fasta(amplicon_file, minseqlen)).items() if count >= mincount}
+    for seq, count in sorted(dic_count.items(), key=lambda x:x[1], reverse=True):
+        print(f"{seq}: {count}")
+        yield [seq, count]
+
+
 
 def get_identity(alignment_list):
     """Prend en une liste de séquences alignées au format ["SE-QUENCE1", "SE-QUENCE2"]
