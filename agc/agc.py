@@ -119,15 +119,24 @@ def dereplication_fulllength(amplicon_file, minseqlen, mincount):
     """
     dic_count = {seq:count for seq, count in Counter(read_fasta(amplicon_file, minseqlen)).items() if count >= mincount}
     for seq, count in sorted(dic_count.items(), key=lambda x:x[1], reverse=True):
-        print(f"{seq}: {count}")
         yield [seq, count]
 
 
 
 def get_identity(alignment_list):
-    """Prend en une liste de séquences alignées au format ["SE-QUENCE1", "SE-QUENCE2"]
-    Retourne le pourcentage d'identite entre les deux."""
-    pass
+    """Returns the identity scores from aligned sequences in a list
+
+    Parameters
+    ----------
+    alignment_list: list
+    list of lists of aligned sequences
+
+    Returns
+    -------
+    A list of alignement scores
+    """
+    return sum([1 for i in range(len(alignment_list[0])) if alignment_list[0][i] == alignment_list[1][i]])/len(alignment_list[0]) * 100
+
 
 def abundance_greedy_clustering(amplicon_file, minseqlen, mincount, chunk_size, kmer_size):
     pass
