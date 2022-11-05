@@ -138,11 +138,63 @@ def get_identity(alignment_list):
     return sum([1 for i in range(len(alignment_list[0])) if alignment_list[0][i] == alignment_list[1][i]])/len(alignment_list[0]) * 100
 
 
-def abundance_greedy_clustering(amplicon_file, minseqlen, mincount, chunk_size, kmer_size):
-    pass
+def abundance_greedy_clustering(amplicon_file, minseqlen, mincount, chunk_size=None, kmer_size=None):
+    """
+    Calculates an OTU clustering based on a fasta file.
+
+    Parameters
+    ----------
+    amplicon_file: str
+    pat to the file
+    minseqlen: int
+    minimym length of sequences
+    mincount: int
+    minimum count of sequences
+
+    Returns
+    -------
+    A list of lists of OTU sequences and their respective counts
+    """
+    lists_of_derep = list(dereplication_fulllength(amplicon_file, minseqlen, mincount))
+    dict_otus = dict([lists_of_derep[0]])
+    for seq, count in lists_of_derep[1:]:
+        refseq = ""
+        for seq_o in dict_otus:
+            align = nw.global_align(
+                seq_o,
+                seq,
+                gap_open=-1,
+                gap_extend=-1,
+                matrix=os.path.abspath(os.path.join(os.path.dirname(__name__),"agc/MATCH"))
+            )
+            if get_identity(align) >= 97:
+                refseq = seq_o
+        if refseq:
+            dict_otus[refseq] += count
+        else:
+            dict_otus[seq] = count
+    return list(dict_otus.items())
+
+
+
+
 
 def write_OTU(OTU_list, output_file):
-    pass
+    """
+    Writes the given OTU_list to an output file
+
+    Parameters
+    ----------
+    OTU_list: list
+    List of tuples of OTUs sequences and their counts
+    output_file: str
+    Path to an output file
+    """
+    with open(output_file, "w") as fileout:
+        for i in range(len(OTU_list)):
+            fileout.write(f">OTU_{i+1} occurrence:{OTU_list[i][1]}\n")
+            fileout.write(textwrap.fill(OTU_list[i][0], 80) + "\n")
+
 
 #==============================================================
 # Main program
